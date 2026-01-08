@@ -67,11 +67,3 @@ android {
 dependencies {
     debugImplementation(compose.uiTooling)
 }
-
-afterEvaluate {
-    tasks.configureEach {
-        if (name.contains("lint", ignoreCase = true)) {
-            enabled = false
-        }
-    }
-}
