@@ -1,16 +1,17 @@
 package com.storeflow.app.di
 
 import com.storeflow.app.network.StoreApi
+import com.storeflow.app.viewmodel.ProductsViewModel
 import org.koin.core.context.startKoin
+import org.koin.core.module.dsl.viewModel // This import will now work!
 import org.koin.dsl.module
 
-// Define the Shared Module
 val appModule = module {
-    // Declares a singleton of StoreApi
     single { StoreApi() }
+    
+    viewModel { ProductsViewModel(get()) }
 }
 
-// Function to initialize Koin (Called by Android App and iOS App)
 fun initKoin() {
     startKoin {
         modules(appModule)
