@@ -2,31 +2,46 @@ import Foundation
 import Shared
 import SwiftUI
 
-// This class connects Kotlin's ViewModel to SwiftUI's Observation system
 @MainActor
 class ProductsViewModelWrapper: ObservableObject {
-    // 1. Hold the Kotlin ViewModel
     private let viewModel: ProductsViewModel
     
-    // 2. Publish the state to SwiftUI
-    @Published var state: ProductListState = ProductListState.Loading()
+    // ✅ FIX 1: Use .shared for the data object
+    @Published var state: ProductListState = ProductListStateLoading.shared
     
     init() {
-        // Inject via Koin (Helper we will add next) or create directly for now if Koin helper isn't ready
-        // Ideally: self.viewModel = KoinHelper().getProductsViewModel()
-        // For simplicity now, let's instantiate via Koin's helper in Kotlin or manual injection.
-        
-        // Let's use a Helper from Kotlin to get the ViewModel to ensure Koin is used.
-        // *Wait, let's make a quick Helper in Kotlin first to make this cleaner.*
+        // ✅ FIX 2: This will work after you run `./gradlew :shared:assemble`
         self.viewModel = ProductsViewModelComponent().provideProductsViewModel()
     }
     
     func startObserving() {
-        // 3. Collect the Kotlin Flow
+        // ✅ FIX 3: Use the Collector pattern
+        let collector = FlowCollector<ProductListState> { [weak self] state in
+            self?.state = state
+        }
+        
         Task {
-            for await state in viewModel.state {
-                self.state = state
+            do {
+                try await viewModel.state.collect(collector: collector)
+            } catch {
+                print("Failed to collect state: \(error)")
             }
         }
+    }
+}
+
+// ✅ Helper Class
+class FlowCollector<T>: NSObject, Kotlinx_coroutines_coreFlowCollector {
+    let callback: (T) -> Void
+
+    init(callback: @escaping (T) -> Void) {
+        self.callback = callback
+    }
+
+    func emit(value: Any?, completionHandler: @escaping (Error?) -> Void) {
+        if let v = value as? T {
+            callback(v)
+        }
+        completionHandler(nil)
     }
 }
