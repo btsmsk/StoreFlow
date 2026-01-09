@@ -9,14 +9,14 @@ struct ContentView: View {
         NavigationView {
             VStack {
                 switch viewModelWrapper.state {
-                case is ProductListState.Loading:
+                case is ProductListStateLoading:
                     ProgressView()
                     
-                case let errorState as ProductListState.Error:
+                case let errorState as ProductListStateError:
                     Text("Error: \(errorState.message)")
                         .foregroundColor(.red)
                     
-                case let successState as ProductListState.Success:
+                case let successState as ProductListStateSuccess:
                     List(successState.products, id: \.id) { product in
                         ProductRow(product: product)
                     }
